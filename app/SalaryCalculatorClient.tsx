@@ -199,7 +199,17 @@ export default function SalaryCalculatorClient() {
             정확한 금액은 위 계산기에 직접 입력해서 확인할 수 있습니다.
           </p>
         </div>
+                <div className="mt-10 text-center text-sm text-slate-400">
+          <p>
+            본 사이트는 연봉 실수령액을 계산하는 참고용 서비스이며 실제 급여와 차이가 있을 수 있습니다.
+          </p>
+
+          <Link href="/contact" className="mt-2 block text-blue-400">
+            문의하기
+          </Link>
+        </div>
       </section>
     </main>
+
   );
 }
