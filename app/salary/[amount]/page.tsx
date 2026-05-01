@@ -1,16 +1,16 @@
 import Link from "next/link";
+import { calculateSalary, formatWon } from "@/lib/calculateSalary";
 
 type Props = {
   params: { amount: string };
 };
 
-// 🔥 SEO 핵심 (페이지마다 제목 바뀜)
 export async function generateMetadata({ params }: Props) {
   const amount = params.amount;
 
   return {
-    title: `연봉 ${amount}만원 실수령액 | 2026 월급 계산`,
-    description: `연봉 ${amount}만원 기준 실수령액과 월급을 계산해드립니다.`,
+    title: `연봉 ${amount}만원 실수령액 | 2026 월급 계산기`,
+    description: `연봉 ${amount}만원 기준 월 실수령액, 세전 월급, 4대보험, 소득세 공제액을 계산합니다.`,
   };
 }
 
@@ -18,63 +18,108 @@ export default function SalaryPage({ params }: Props) {
   const amount = Number(params.amount);
   const yearlySalary = amount * 10000;
 
-  const monthlySalary = yearlySalary / 12;
-
-  const pension = monthlySalary * 0.0475;
-  const health = monthlySalary * 0.03595;
-  const longTermCare = health * 0.1314;
-  const employment = monthlySalary * 0.009;
-
-  const totalDeduction =
-    pension + health + longTermCare + employment;
-
-  const netMonthly = monthlySalary - totalDeduction;
-
-  const formatWon = (value: number) =>
-    Math.round(value).toLocaleString("ko-KR") + "원";
+  const result = calculateSalary({
+    yearlySalary,
+    taxFreeMonthly: 200000,
+    familyCount: 1,
+    childCount: 0,
+  });
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
-      <section className="mx-auto max-w-xl bg-white p-6 rounded-2xl shadow">
-        <h1 className="text-2xl font-bold">
-          연봉 {amount}만원 실수령액
-        </h1>
-
-        <p className="mt-2 text-gray-600">
-          연봉 {amount}만원 기준 예상 월 실수령액입니다.
-        </p>
-
-        <div className="mt-6 bg-gray-100 p-5 rounded-xl">
-          <p className="text-gray-600">월 실수령액</p>
-          <p className="text-3xl font-bold">
-            {formatWon(netMonthly)}
+    <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-900">
+      <section className="mx-auto max-w-3xl">
+        <div className="mb-8 text-center text-white">
+          <p className="mb-3 text-sm font-semibold text-blue-300">
+            2026 연봉 실수령액
           </p>
-
-          <div className="mt-4 text-sm space-y-2">
-            <div className="flex justify-between">
-              <span>월급여</span>
-              <span>{formatWon(monthlySalary)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>총 공제</span>
-              <span>-{formatWon(totalDeduction)}</span>
-            </div>
-          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">
+            연봉 {amount}만원 실수령액
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+            연봉 {amount}만원 기준 예상 월 실수령액과 공제 항목을 확인하세요.
+          </p>
         </div>
 
-        <Link href="/" className="block mt-6 text-blue-500">
-          ← 계산기로 돌아가기
-        </Link>
+        <div className="rounded-3xl bg-white p-6 shadow-2xl">
+          <p className="text-sm font-semibold text-blue-600">예상 월 실수령액</p>
+
+          <div className="mt-3 rounded-3xl bg-slate-950 p-6 text-white">
+            <p className="text-sm text-slate-400">월 예상 수령액</p>
+            <p className="mt-2 text-4xl font-extrabold tracking-tight sm:text-5xl">
+              {formatWon(result.netMonthly)}
+            </p>
+            <p className="mt-3 text-sm text-slate-400">
+              세전 월급 {formatWon(result.monthlySalary)} 기준
+            </p>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {[
+              ["월급여", result.monthlySalary],
+              ["비과세 제외 과세월급", result.taxableMonthly],
+              ["국민연금", -result.pension],
+              ["건강보험", -result.health],
+              ["장기요양보험", -result.longTermCare],
+              ["고용보험", -result.employment],
+              ["소득세", -result.incomeTax],
+              ["지방소득세", -result.localTax],
+              ["총 공제액", -result.totalDeduction],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm"
+              >
+                <span className="font-medium text-slate-600">{label}</span>
+                <span className="font-bold text-slate-950">
+                  {typeof value === "number" && value < 0
+                    ? `-${formatWon(Math.abs(value))}`
+                    : formatWon(Number(value))}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 rounded-2xl bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+            이 계산은 월 비과세 20만원, 부양가족 1명, 자녀 0명을 기본값으로 사용합니다.
+            개인 조건에 따라 실제 월급은 달라질 수 있습니다.
+          </div>
+
+          <Link
+            href="/"
+            className="mt-6 block rounded-2xl bg-blue-600 px-5 py-4 text-center font-bold text-white transition hover:bg-blue-700"
+          >
+            내 조건으로 다시 계산하기
+          </Link>
+        </div>
+
+        <div className="mt-8 rounded-3xl bg-slate-900 p-6 text-slate-300">
+          <h2 className="text-xl font-bold text-white">
+            연봉 {amount}만원의 세전 월급
+          </h2>
+          <p className="mt-3 text-sm leading-7">
+            연봉 {amount}만원의 세전 월급은 약 {formatWon(result.monthlySalary)}입니다.
+            여기서 국민연금, 건강보험, 장기요양보험, 고용보험, 소득세, 지방소득세 등이 공제된 뒤
+            실제 월 실수령액이 결정됩니다.
+          </p>
+
+          <h2 className="mt-6 text-xl font-bold text-white">
+            연봉 {amount}만원 실수령액 계산 기준
+          </h2>
+          <p className="mt-3 text-sm leading-7">
+            기본 계산 기준은 월 비과세 20만원, 부양가족 본인 포함 1명, 자녀 0명입니다.
+            식대 등 비과세 금액이나 부양가족 수가 달라지면 소득세와 실수령액도 달라질 수 있습니다.
+          </p>
+        </div>
       </section>
     </main>
   );
 }
 
-// 🔥 SEO 페이지 자동 생성
 export async function generateStaticParams() {
   const salaries = [
-    2400, 2600, 2800, 3000, 3200,
-    3500, 4000, 4500, 5000, 6000,
+    2000, 2200, 2400, 2600, 2800,
+    3000, 3200, 3400, 3600, 3800,
+    4000, 4500, 5000, 6000,
     7000, 8000, 9000, 10000,
   ];
 
