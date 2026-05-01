@@ -2,11 +2,11 @@ import Link from "next/link";
 import { calculateSalary, formatWon } from "@/lib/calculateSalary";
 
 type Props = {
-  params: { amount: string };
+  params: Promise<{ amount: string }>;
 };
 
 export async function generateMetadata({ params }: Props) {
-  const amount = params.amount;
+  const { amount } = await params;
 
   return {
     title: `연봉 ${amount}만원 실수령액 | 2026 월급 계산기`,
@@ -14,9 +14,11 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default function SalaryPage({ params }: Props) {
-  const amount = Number(params.amount);
-  const yearlySalary = amount * 10000;
+export default async function SalaryPage({ params }: Props) {
+  const { amount } = await params;
+
+  const salaryAmount = Number(amount);
+  const yearlySalary = salaryAmount * 10000;
 
   const result = calculateSalary({
     yearlySalary,
@@ -32,11 +34,13 @@ export default function SalaryPage({ params }: Props) {
           <p className="mb-3 text-sm font-semibold text-blue-300">
             2026 연봉 실수령액
           </p>
+
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl">
-            연봉 {amount}만원 실수령액
+            연봉 {salaryAmount}만원 실수령액
           </h1>
+
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-            연봉 {amount}만원 기준 예상 월 실수령액과 공제 항목을 확인하세요.
+            연봉 {salaryAmount}만원 기준 예상 월 실수령액과 공제 항목을 확인하세요.
           </p>
         </div>
 
@@ -90,25 +94,6 @@ export default function SalaryPage({ params }: Props) {
           >
             내 조건으로 다시 계산하기
           </Link>
-        </div>
-
-        <div className="mt-8 rounded-3xl bg-slate-900 p-6 text-slate-300">
-          <h2 className="text-xl font-bold text-white">
-            연봉 {amount}만원의 세전 월급
-          </h2>
-          <p className="mt-3 text-sm leading-7">
-            연봉 {amount}만원의 세전 월급은 약 {formatWon(result.monthlySalary)}입니다.
-            여기서 국민연금, 건강보험, 장기요양보험, 고용보험, 소득세, 지방소득세 등이 공제된 뒤
-            실제 월 실수령액이 결정됩니다.
-          </p>
-
-          <h2 className="mt-6 text-xl font-bold text-white">
-            연봉 {amount}만원 실수령액 계산 기준
-          </h2>
-          <p className="mt-3 text-sm leading-7">
-            기본 계산 기준은 월 비과세 20만원, 부양가족 본인 포함 1명, 자녀 0명입니다.
-            식대 등 비과세 금액이나 부양가족 수가 달라지면 소득세와 실수령액도 달라질 수 있습니다.
-          </p>
         </div>
       </section>
     </main>
