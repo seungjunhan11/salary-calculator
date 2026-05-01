@@ -7,9 +7,16 @@ export const metadata = {
 };
 
 export default function Home() {
-  return <SalaryCalculatorClient />;
+  return (
+    <>
+      <SalaryCalculatorClient />
+
+      <div className="mt-10 text-sm text-slate-400 text-center">
+        <p>
+          본 사이트는 연봉 실수령액을 계산하는 도구이며, 실제 급여와 차이가 있을 수 있습니다.
+        </p>
+        <p className="mt-2">문의: example@email.com</p>
+      </div>
+    </>
+  );
 }
-<div className="mt-10 text-sm text-slate-400">
-  <p>본 사이트는 연봉 실수령액을 계산하는 도구이며, 실제 급여와 차이가 있을 수 있습니다.</p>
-  <p className="mt-2">문의: example@email.com</p>
-</div>
